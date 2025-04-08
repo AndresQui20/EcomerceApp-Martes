@@ -19,7 +19,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
 
+
+                LoginScreen()
+
+            }
         }
     }
-}
+
 
