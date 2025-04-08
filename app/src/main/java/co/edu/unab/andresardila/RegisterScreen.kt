@@ -35,7 +35,9 @@ fun RegisterScreen() {
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .padding(horizontal = 32.dp),
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
