@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1029940699152",
+    "project_id": "loginfirebase-515e4",
+    "storage_bucket": "loginfirebase-515e4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1029940699152:android:b9c966686e5048854a6a95",
+        "android_client_info": {
+          "package_name": "co.edu.unab.andresardila"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEI6qTR5Xic-nPgczwUzef6VQBK9HVy9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

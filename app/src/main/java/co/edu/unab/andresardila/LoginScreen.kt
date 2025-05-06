@@ -1,5 +1,6 @@
 package co.edu.unab.andresardila
 
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,18 +22,38 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(onClickRegister :()->Unit = {}, onSuccessfulLogin :()->Unit = {}) {
+
+    val auth = Firebase.auth
+    val activity = LocalView.current.context as Activity
+
+
+    //ESTADOS
+    var inputEmail by remember { mutableStateOf("") }
+    var inputPassword by remember { mutableStateOf("") }
+    var loginError by remember { mutableStateOf("") }
+
+
+
+
     Scaffold { valuesPadding ->
         Column(
             modifier = Modifier
@@ -58,8 +79,8 @@ fun LoginScreen(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(24.dp))
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
+                value = inputEmail,
+                onValueChange = { inputEmail = it },
                 label = {
                     Text("correo electronico")
                 },
@@ -76,8 +97,8 @@ fun LoginScreen(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(24.dp))
             OutlinedTextField(
-                value = "",
-                onValueChange = {},
+                value = inputPassword,
+                onValueChange = { inputPassword = it },
                 label = {
                     Text("Contraseña")
                 },
@@ -94,17 +115,49 @@ fun LoginScreen(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(24.dp))
 
+            if (loginError.isNotEmpty()) {
+                Text(
+                    loginError,
+                    color = Color.Red,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+
+            }
+
+
             Button(
                 onClick = {
-                    navController.navigate("home")
+
+
+                    auth.signInWithEmailAndPassword(inputEmail, inputPassword)
+                        .addOnCompleteListener(activity) { task ->
+                            if (task.isSuccessful) {
+                                onSuccessfulLogin()
+
+
+
+
+                            } else {
+                                loginError = " Error al iniciar secion"
+
+                            }
+
+                        }
+
+
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFF9900)
                 ),
-                modifier = Modifier.fillMaxWidth().height(50.dp)
-            ){
-                Text(text ="Iniciar sesion",
-                fontSize = 16.sp
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Text(
+                    text = "Iniciar sesion",
+                    fontSize = 16.sp
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
@@ -125,7 +178,7 @@ fun LoginScreen(navController: NavController) {
 @Composable
 fun LoginScreenPreview() {
 
-   // LoginScreen()
+    // LoginScreen()
 
 
 }
