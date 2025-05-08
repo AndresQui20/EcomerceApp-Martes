@@ -8,9 +8,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -32,44 +36,43 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.auth
 
 @Composable
-fun LoginScreen(onClickRegister :()->Unit = {}, onSuccessfulLogin :()->Unit = {}) {
-
+fun LoginScreen(navcontroller: NavController) {
     val auth = Firebase.auth
+    var textocorreo by remember { mutableStateOf("") }
+    var textocontra by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
+    var MessageEmail by remember { mutableStateOf("") }
+    var MessagePassword by remember { mutableStateOf("") }
     val activity = LocalView.current.context as Activity
-
-
-    //ESTADOS
-    var inputEmail by remember { mutableStateOf("") }
-    var inputPassword by remember { mutableStateOf("") }
-    var loginError by remember { mutableStateOf("") }
-
-
-
-
     Scaffold { valuesPadding ->
         Column(
             modifier = Modifier
                 .padding(valuesPadding)
                 .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
-
         ) {
             Image(
                 painter = painterResource(R.drawable.logo_unab),
                 contentDescription = "Logo Unab",
                 modifier = Modifier.size(200.dp)
             )
-
             Spacer(modifier = Modifier.height(32.dp))
             Text(
                 text = "Iniciar Sesion",
@@ -79,106 +82,131 @@ fun LoginScreen(onClickRegister :()->Unit = {}, onSuccessfulLogin :()->Unit = {}
             )
             Spacer(modifier = Modifier.height(24.dp))
             OutlinedTextField(
-                value = inputEmail,
-                onValueChange = { inputEmail = it },
-                label = {
-                    Text("correo electronico")
+                value = textocorreo,
+                onValueChange = {
+                    textocorreo = it
                 },
-                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Correo Electronico") }, modifier = Modifier.fillMaxWidth(),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Email,
-                        contentDescription = "Email",
+                        contentDescription = "email",
                         tint = Color(0xFFFF9900)
                     )
                 },
-                shape = RoundedCornerShape(12.dp)
-
+                shape = RoundedCornerShape(12.dp),
+                supportingText = {
+                    if (MessageEmail.isNotEmpty()) {
+                        Text(
+                            text = MessageEmail,
+                            color = Color.Red
+                        )
+                    }
+                }, keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrect = false,
+                    keyboardType = KeyboardType.Email
+                )
             )
             Spacer(modifier = Modifier.height(24.dp))
             OutlinedTextField(
-                value = inputPassword,
-                onValueChange = { inputPassword = it },
-                label = {
-                    Text("Contraseña")
+                value = textocontra,
+                onValueChange = {
+                    textocontra = it
                 },
-                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Contraseña") }, modifier = Modifier.fillMaxWidth(),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Contraseña",
                         tint = Color(0xFFFF9900)
                     )
-                },
-                shape = RoundedCornerShape(12.dp)
+                },keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrect = false,
+                    keyboardType = KeyboardType.Password
+                ),
+                visualTransformation = PasswordVisualTransformation(),
+
+                shape = RoundedCornerShape(12.dp),
+                supportingText = {
+                    if (MessagePassword.isNotEmpty()) {
+                        Text(
+                            text = MessagePassword,
+                            color = Color.Red
+                        )
+                    }
+                }
 
             )
             Spacer(modifier = Modifier.height(24.dp))
-
-            if (loginError.isNotEmpty()) {
+            if (error.isNotEmpty()) {
                 Text(
-                    loginError,
+                    error,
                     color = Color.Red,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
                 )
-
             }
-
 
             Button(
                 onClick = {
+                    var BooleanEmail: Boolean = ValidationEmail(textocorreo).first
+                    MessageEmail = ValidationEmail(textocorreo).second
+                    var BooleanPassword: Boolean = ValidationPassword(textocontra).first
+                    MessagePassword = ValidationPassword(textocontra).second
 
-
-                    auth.signInWithEmailAndPassword(inputEmail, inputPassword)
-                        .addOnCompleteListener(activity) { task ->
-                            if (task.isSuccessful) {
-                                onSuccessfulLogin()
-
-
-
-
-                            } else {
-                                loginError = " Error al iniciar secion"
-
+                    if (BooleanPassword && BooleanEmail) {
+                        auth.signInWithEmailAndPassword(textocorreo, textocontra)
+                            .addOnCompleteListener(activity) { task ->
+                                if (task.isSuccessful) {
+                                    navcontroller.navigate("HomeScreen") {
+                                        popUpTo("LoginScreen") {
+                                            inclusive = true
+                                        }
+                                    }
+                                } else {
+                                    error = when (task.exception) {
+                                        is FirebaseAuthInvalidCredentialsException -> " Correo o Contraseña inconrrecta"
+                                        is FirebaseAuthInvalidUserException -> "No existe una cuenta con este correo"
+                                        else -> "Error al iniciar sesion Intente de Nuevo"
+                                    }
+                                }
                             }
+                    } else {
 
-                        }
-
-
+                    }
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF9900)
-                ),
+                colors = ButtonDefaults.buttonColors
+                    (containerColor = Color(0xFFFF9900)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
             ) {
                 Text(
-                    text = "Iniciar sesion",
+                    text = "Iniciar Sesion",
                     fontSize = 16.sp
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
             TextButton(onClick = {
-                navController.navigate("Register")
+                navcontroller.navigate("RegisterScreen")
             }) {
-                Text(text = "No tienes cuenta? Registrate", color = Color(0xFFFF9900))
+                Text(
+                    text = "¿No tienes una cuenta? Registrate",
+                    color = Color(0xFFFF9900)
+                )
             }
-
 
         }
     }
-
-
 }
 
 @Preview
 @Composable
-fun LoginScreenPreview() {
+fun LoginScreenPrevie() {
 
-    // LoginScreen()
-
+//        LoginScreen()
 
 }
